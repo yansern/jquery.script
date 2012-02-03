@@ -118,7 +118,7 @@ $.script = (function(){
 
                 script.complete.call(script, event);
 
-                script.manager.resolve();
+                script.manager.resolve(script);
             }
         },
 
@@ -130,7 +130,7 @@ $.script = (function(){
 
             script.remove();
 
-            script.manager.reject();
+            script.manager.reject(script);
         },
 
         complete: function() {
