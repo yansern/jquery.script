@@ -42,16 +42,24 @@ $.script = (function(){
         script.load();
     };
 
-    var head = document.getElementsByTagName( "head" )[0],
+    var head = document.getElementsByTagName("head")[0],
         baseElement = document.getElementsByTagName("base")[0];
 
     $.extend(Script.prototype, {
+
+        timeout: 7000,
+
+        retry: 3,
+
+        retryCount: 1,
 
         type: "text/javascript",
 
         async: false,
 
         charset: "UTF-8",
+
+        verbose: false,
 
         insert: function() {
 
@@ -78,6 +86,8 @@ $.script = (function(){
 
             var script = this,
                 node;
+
+            script.endTime = undefined;
 
             script.startTime = new Date();
 
@@ -107,12 +117,47 @@ $.script = (function(){
                 src     : script.url
             });
 
+            script.monitor();
+        },
+
+        monitor: function() {
+
+            var script = this;
+
+            if (script.retryCount > script.retry) {
+
+                script._error();
+
+                return;
+            }
+
+            setTimeout(function() {
+
+                if (script.state()!=="resolved") {
+
+                    if (script.verbose) {
+                        console.warn('$.script: Load timeout - ' + script.url + '. [Retry: ' + script.retryCount + ']', script);
+                    }
+
+                    script.remove();
+
+                    script.retryCount++;
+
+                    script.load();
+                }
+
+            }, script.timeout * script.retryCount);
+
         },
 
         ready: function(event) {
 
             var script = this,
                 node = script.node;
+
+            if (script.verbose) {
+                console.info('$.script: Load successful - ' + script.url, script);
+            }
 
             if (event.type==="load" || /loaded|complete/.test(node.readyState)) {
 
@@ -126,6 +171,10 @@ $.script = (function(){
 
             var script = this;
 
+            if (script.verbose) {
+                console.error('$.script: Unable to load ' + script.url, script);
+            }
+
             script.complete.call(script, event);
 
             script.remove();
@@ -133,7 +182,7 @@ $.script = (function(){
             script.manager.reject(script);
         },
 
-        complete: function() {
+        complete: function(event) {
 
             var script = this,
                 node = script.node;
