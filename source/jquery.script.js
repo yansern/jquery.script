@@ -16,6 +16,16 @@ $.script = (function(){
 
     var self = function(options) {
 
+        if (options===undefined) {
+            return;
+        }
+
+        if (typeof options==="string") {
+            options = {
+                url: options
+            }
+        }
+
         var script = new Script(options);
 
         return script;
