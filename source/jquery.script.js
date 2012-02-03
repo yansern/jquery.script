@@ -1,6 +1,6 @@
 /**
  * jquery.script
- * Script loader utility. Loads external script via script injection/XHR.
+ * Script injection utility built on top $.Deferred() backbone.
  * https://github.com/jstonne/jquery.script
  *
  * Copyright (c) 2012 Jensen Tonne
@@ -14,7 +14,6 @@
 
 $.script = (function(){
 
-
     var self = function() {
 
         var script = new Script(options);
@@ -24,16 +23,46 @@ $.script = (function(){
 
     var Script = function(options) {
 
-        var script = this;
+        var script = $.script(this, options);
 
-        if ($.isPlainObject(params)) {
-            $.extend(true, this, options);
-        }
+        script.manager = $.Deferred();
+
+        $.extend(script, script.manager.promise());
 
         return script.load();
     };
 
+    var head = document.getElementsByTagName( "head" )[0],
+        baseElement = document.getElementsByTagName("base")[0];
+
     $.extend(Script.prototype, {
+
+        type: "text/javascript",
+
+        async: false,
+
+        charset: "UTF-8",
+
+        insert: function() {
+
+            var node = this.node;
+
+            if (baseElement) {
+                head.insertBefore(node, baseElement);
+            } else {
+                head.appendChild(node);
+            }
+        },
+
+        remove: function() {
+
+            var node = this.node;
+
+            // Handle memory leak in IE
+            node.onload = node.onerror = node.onreadystatechange = null;
+
+            head.removeChild(node);
+        },
 
         load: function() {
 
@@ -44,7 +73,7 @@ $.script = (function(){
 
             script.node = node = document.createElement('script');
 
-            document.getElementsByTagName('head')[0].appendChild(node);
+            script.insert();
 
             // Create a reference to these proxied functions,
             // so that we can detach them from event listeners.
@@ -64,7 +93,7 @@ $.script = (function(){
             $(node).attr({
                 type    : script.type,
                 async   : script.async,
-                charset : "UTF-8",
+                charset : script.charset,
                 src     : script.url
             });
 
@@ -77,9 +106,9 @@ $.script = (function(){
 
             if (event.type==="load" || /loaded|complete/.test(node.readyState)) {
 
-                script.done && script.done();
-
                 script.complete.call(script, event);
+
+                script.manager.resolve();
             }
         },
 
@@ -87,9 +116,11 @@ $.script = (function(){
 
             var script = this;
 
-            script.fail && script.fail();
-
             script.complete.call(script, event);
+
+            script.remove();
+
+            script.manager.reject();
         },
 
         complete: function() {
