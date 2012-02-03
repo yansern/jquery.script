@@ -102,7 +102,7 @@ $.script = (function(){
 
             // On IE9, addEventListener() does not necessary fire the onload event after
             // the script is loaded, attachEvent() method behaves correctly.
-            if (node.attachEvent && !$.isOpera) {
+            if (node.attachEvent && !$.browser.opera) {
                 node.attachEvent("onreadystatechange", script._ready);
                 node.attachEvent("onerror"           , script._error); // IE9 only.
             } else {
@@ -189,7 +189,7 @@ $.script = (function(){
 
             script.endTime = new Date();
 
-            if (node.detachEvent && !$.isOpera) {
+            if (node.detachEvent && !$.browser.opera) {
                 node.detachEvent("onreadystatechange", script._ready);
                 node.detachEvent("onerror"           , script._error);
             } else {
