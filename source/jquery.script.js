@@ -14,7 +14,7 @@
 
 $.script = (function(){
 
-    var self = function() {
+    var self = function(options) {
 
         var script = new Script(options);
 
@@ -23,13 +23,13 @@ $.script = (function(){
 
     var Script = function(options) {
 
-        var script = $.script(this, options);
+        var script = $.extend(this, options);
 
         script.manager = $.Deferred();
 
         $.extend(script, script.manager.promise());
 
-        return script.load();
+        script.load();
     };
 
     var head = document.getElementsByTagName( "head" )[0],
@@ -143,4 +143,4 @@ $.script = (function(){
 
     return self;
 
-});
+})();
